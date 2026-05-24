@@ -40,9 +40,7 @@ def main():
         help="append a suffix to the filename of the input file",
         type=str,
     )
-    g.add_argument(
-        "-i", "--in-place", help="replace the existing file", action="store_true"
-    )
+    g.add_argument("--in-place", help="replace the existing file", action="store_true")
     args = parser.parse_args()
 
     input_file = args.filename
