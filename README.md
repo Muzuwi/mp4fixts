@@ -11,6 +11,9 @@ In this particular case the file contents are still correct, other than the inva
 There are alternative ways of fixing this case (for example: by extracting the raw h264/audio streams from the container file and remuxing them manually), but the goal of this project was to learn a bit about the MP4 format.
 This script leaves the entire MP4 file structure as is, and only modifies the corrupted fields.
 
+**DISCLAIMER: The audio track of the resulting output file currently may not work with every media player due to a bug.**
+I'm looking into this, as it appears that pymp4 is reordering some boxes in a way that makes some players bail out on the audio track entirely.
+
 # Identifying if your file is affected
 
 One way you can tell that your file is affected by this is running `ffprobe path-to-file.mp4`, which will report wildly incorrect duration for the video file, as well as insanely low framerate:
