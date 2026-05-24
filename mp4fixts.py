@@ -47,15 +47,15 @@ def main():
 
     input_file = args.filename
     output_file = ""
-    if hasattr(args, "output"):
-        output_file = args.output
-    elif getattr(args, "in_place", False):
+    if getattr(args, "in_place", False):
         output_file = input_file
     elif getattr(args, "output_prefix", None) is not None:
         output_file = pathlib.Path(input_file)
         output_file = output_file.with_stem(
             output_file.stem + args.output_prefix
         ).resolve()
+    else:
+        output_file = args.output
 
     mp4: MP4
     with open(input_file, "rb") as f:
