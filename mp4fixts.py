@@ -21,6 +21,10 @@ INVALID_TRACK_DURATION_THRESHOLD_SEC = 10_000
 INVALID_STTS_DELTA_THRESHOLD = 100_000
 
 
+def fmtdur(duration, timebase):
+    return f"{duration} ({round(float(duration) / timebase, 3)}s)"
+
+
 def main():
     parser = argparse.ArgumentParser(
         prog="mp4fixts",
@@ -67,7 +71,7 @@ def main():
 
     moov = next(filter(lambda x: x.type == b"moov", mp4))
     mvhd = next(filter(lambda x: x.type == b"mvhd", moov.children))
-    print("MVHD timescale:", mvhd.timescale, "duration:", mvhd.duration)
+    print("MVHD duration:", fmtdur(mvhd.duration, mvhd.timescale))
 
     broken_tracks_found = False
     # Try fixing up all broken tracks
@@ -86,8 +90,8 @@ def main():
         print(
             f"Found broken track at offset {trak.offset} with duration of {track_seconds}s"
         )
-        print("TKHD duration:", tkhd.duration)
-        print("MDHD timescale:", mdhd.timescale, "duration:", mdhd.duration)
+        print("TKHD duration:", fmtdur(tkhd.duration, mvhd.timescale))
+        print("MDHD duration:", fmtdur(mdhd.duration, mdhd.timescale))
 
         minf = next(filter(lambda x: x.type == b"minf", mdia.children))
         stbl = next(filter(lambda x: x.type == b"stbl", minf.children))
@@ -105,14 +109,12 @@ def main():
             stts_duration += entry.sample_delta * entry.sample_count
         stts_duration_sec = float(stts_duration) / mdhd.timescale
         tkhd_new_duration = int(stts_duration_sec * mvhd.timescale)
+        print(f"STTS calculated duration: {fmtdur(stts_duration, mdhd.timescale)})")
         print(
-            f"STTS calculated duration: {stts_duration} @ {mdhd.timescale} ({stts_duration_sec}s)"
+            f"Updating MDHD duration: {fmtdur(mdhd.duration, mdhd.timescale)} => {fmtdur(stts_duration, mdhd.timescale)}"
         )
         print(
-            f"Updating MDHD duration: {mdhd.duration} ({mdhd.duration / mdhd.timescale}s) => {stts_duration}"
-        )
-        print(
-            f"Updating TKHD duration: {tkhd.duration} ({tkhd.duration / mvhd.timescale}s) => {tkhd_new_duration}"
+            f"Updating TKHD duration: {fmtdur(tkhd.duration, mvhd.timescale)} => {fmtdur(tkhd_new_duration, mvhd.timescale)}"
         )
         mdhd.duration = stts_duration
         # TKHD duration is specified with respect to the MVHD timescale.
@@ -130,15 +132,19 @@ def main():
         mdia = next(filter(lambda x: x.type == b"mdia", trak.children))
         mdhd = next(filter(lambda x: x.type == b"mdhd", mdia.children))
 
-        duration = float(tkhd.duration) / mvhd.timescale
         longest_duration_track = max(longest_duration_track, tkhd.duration)
-        print(f"Track at offset {trak.offset} duration: {tkhd.duration} ({duration}s)")
+        print(
+            f"Track at offset {trak.offset} duration: {fmtdur(tkhd.duration, mvhd.timescale)}"
+        )
 
-    print(f"Updating MVHD duration: {mvhd.duration} => {longest_duration_track}")
+    print(
+        f"Updating MVHD duration: {fmtdur(mvhd.duration, mvhd.timescale)} => {fmtdur(longest_duration_track, mvhd.timescale)}"
+    )
     mvhd.duration = longest_duration_track
 
     with open(output_file, "wb") as f:
         f.write(MP4.build(mp4))
+    print("Wrote output file to", output_file)
 
 
 if __name__ == "__main__":
