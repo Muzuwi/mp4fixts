@@ -36,8 +36,8 @@ def main():
         "-o", "--output", help="output filename", type=str, default="output_fixed.mp4"
     )
     g.add_argument(
-        "--output-prefix",
-        help="append a prefix to the filename of the input file",
+        "--output-suffix",
+        help="append a suffix to the filename of the input file",
         type=str,
     )
     g.add_argument(
@@ -49,10 +49,10 @@ def main():
     output_file = ""
     if getattr(args, "in_place", False):
         output_file = input_file
-    elif getattr(args, "output_prefix", None) is not None:
+    elif getattr(args, "output_suffix", None) is not None:
         output_file = pathlib.Path(input_file)
         output_file = output_file.with_stem(
-            output_file.stem + args.output_prefix
+            output_file.stem + args.output_suffix
         ).resolve()
     else:
         output_file = args.output
