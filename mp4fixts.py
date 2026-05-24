@@ -69,6 +69,7 @@ def main():
     mvhd = next(filter(lambda x: x.type == b"mvhd", moov.children))
     print("MVHD timescale:", mvhd.timescale, "duration:", mvhd.duration)
 
+    broken_tracks_found = False
     # Try fixing up all broken tracks
     for trak in filter(lambda x: x.type == b"trak", moov.children):
         tkhd = next(filter(lambda x: x.type == b"tkhd", trak.children))
@@ -80,6 +81,8 @@ def main():
                 f"Skipping track at offset {trak.offset} as it appears to have correct timestamp"
             )
             continue
+        broken_tracks_found = True
+
         print(
             f"Found broken track at offset {trak.offset} with duration of {track_seconds}s"
         )
@@ -114,6 +117,10 @@ def main():
         mdhd.duration = stts_duration
         # TKHD duration is specified with respect to the MVHD timescale.
         tkhd.duration = tkhd_new_duration
+
+    if not broken_tracks_found:
+        print("No broken tracks found, nothing to do")
+        exit(0)
 
     # Establish base duration from the fixed up tracks and modify mvhd accordingly.
     # This should match the longest track.
