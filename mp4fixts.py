@@ -27,8 +27,10 @@ def main():
         description="Attempt fixing corrupted duration timestamps of an MP4 file.",
     )
     parser.add_argument("filename", help="input MP4 file")
-    g = parser.add_mutually_exclusive_group(required=True)
-    g.add_argument("-o", "--output", help="output filename", type=str)
+    g = parser.add_mutually_exclusive_group()
+    g.add_argument(
+        "-o", "--output", help="output filename", type=str, default="output_fixed.mp4"
+    )
     g.add_argument(
         "--output-prefix",
         help="append a prefix to the filename of the input file",
@@ -43,9 +45,9 @@ def main():
     output_file = ""
     if hasattr(args, "output"):
         output_file = args.output
-    if getattr(args, "in_place", False):
+    elif getattr(args, "in_place", False):
         output_file = input_file
-    if getattr(args, "output_prefix", None) is not None:
+    elif getattr(args, "output_prefix", None) is not None:
         output_file = pathlib.Path(input_file)
         output_file = output_file.with_stem(
             output_file.stem + args.output_prefix
